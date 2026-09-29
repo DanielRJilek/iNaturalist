@@ -52,22 +52,27 @@ def test_network( dataloader, model, test_losses, device="cpu" ):
         test_loss /= len(dataloader.dataset)
         test_losses.append(test_loss)
     total = len(dataloader.dataset)
+    top_1_accuracy = 100. * correct_top1 / total
+    top_5_accuracy = 100. * correct_top5 / total
     print('\nTest set: Avg. loss: {:.4f}'.format(test_loss))
-    print('Top-1 Accuracy: {}/{} ({:.1f}%)'.format(correct_top1, total, 100. * correct_top1 / total))
-    print('Top-5 Accuracy: {}/{} ({:.1f}%)\n'.format(correct_top5, total, 100. * correct_top5 / total))
-    return
+    print('Top-1 Accuracy: {}/{} ({:.1f}%)'.format(correct_top1, total, top_1_accuracy))
+    print('Top-5 Accuracy: {}/{} ({:.1f}%)\n'.format(correct_top5, total, top_5_accuracy))
+    return top_1_accuracy, top_5_accuracy
 
-def run_training(model, train_loader, test_loader, optimizer, scheduler, epochs, device, test_interval=1):
+def run_training(model, train_loader, test_loader, optimizer, epochs, device, test_interval=1, scheduler=None, start_epoch=0):
     train_losses, train_counter, test_losses = [], [], []
+    top_1_accuracy, top_5_accuracy = [], []
     scaler = torch.amp.GradScaler(device.type, enabled=device.type == "cuda")
-    for epoch in range(1, epochs + 1):
+    for epoch in range(start_epoch + 1, start_epoch + epochs + 1):
         train_network(
             train_loader, model, optimizer,
             train_losses, train_counter, epoch, device=device,
             scaler=scaler,
         )
         if epoch % test_interval == 0:
-            test_network(test_loader, model, test_losses, device=device)
-            scheduler.step(test_losses[-1])
-    scaler.destroy()
-    return train_losses, test_losses
+            top_1, top_5 = test_network(test_loader, model, test_losses, device=device)
+            top_1_accuracy.append(top_1)
+            top_5_accuracy.append(top_5)
+            if scheduler is not None:
+                scheduler.step(test_losses[-1])
+    return train_losses, test_losses, top_1_accuracy, top_5_accuracy
