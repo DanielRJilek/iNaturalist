@@ -11,7 +11,7 @@ def train_network( dataloader, model, optimizer, train_losses, train_counter, ep
 
         with autocast(device_type=device.type):
             output = model(data)
-            loss = F.cross_entropy(output, target)
+            loss = F.cross_entropy(output, target, label_smoothing=0.1)
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
