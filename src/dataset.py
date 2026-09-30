@@ -13,6 +13,11 @@ class LabelMapper:
     def __call__(self, y):
         return self.mapping_dict[y]
 
+def as_rgb(value):
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value, value, value]
+
 # Loads the train and test datasets, applies the necessary transformations, takes the subset of mammal images
 def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target):
     # Download training data from open datasets
@@ -26,7 +31,8 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
             torchvision.transforms.RandomHorizontalFlip(),
             v2.ColorJitter(brightness=0.2, contrast=0.2),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=[my_dataset_mean, my_dataset_mean, my_dataset_mean], std=[my_dataset_std, my_dataset_std, my_dataset_std])
+            torchvision.transforms.Normalize(mean=as_rgb(my_dataset_mean), std=as_rgb(my_dataset_std)),
+            torchvision.transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(1/20, 20), value=0),
         ]),
         target_transform=map_target
     )
@@ -40,10 +46,11 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
         version="2017",
         download=True,
         transform=torchvision.transforms.Compose([
-            torchvision.transforms.Resize((224, 224)),
+            torchvision.transforms.Resize(256),
+            torchvision.transforms.CenterCrop(224),
             v2.RGB(),
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=[my_dataset_mean, my_dataset_mean, my_dataset_mean], std=[my_dataset_std, my_dataset_std, my_dataset_std])
+            torchvision.transforms.Normalize(mean=as_rgb(my_dataset_mean), std=as_rgb(my_dataset_std))
         ]),
         target_transform=map_target
     )
