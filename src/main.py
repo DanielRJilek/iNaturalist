@@ -1,4 +1,5 @@
 import torch
+import torchvision
 from YOLOV1 import YOLOV1
 from dataset import build_loaders, load_dataset_stats, load_class_indices, create_mapping
 from train import run_training
@@ -10,7 +11,7 @@ def main():
     batch_size_test = 500
     epochs = 5
     random_seed = 1
-    learning_rate = 1e-3    
+    learning_rate = 1e-4  
     momentum = 0.9  
     weight_decay=5e-4
     test_interval = 1
@@ -24,7 +25,13 @@ def main():
             break
         print("Enter n or c.")
 
-    my_dataset_mean, my_dataset_std = load_dataset_stats()
+    while True:
+        model_type = input("Choose model type [y/18/50]: ").strip().lower()
+        if model_type in ("y", "18", "50"):
+            break
+        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50.")
+
+    
     # Get mammal indices for both train and valid sets
     mammal_indices_train = load_class_indices(8, "data/stats/mammal_indices_train.json")
     mammal_indices_valid = load_class_indices(8, "data/stats/mammal_indices_valid.json")
@@ -32,13 +39,33 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    model = YOLOV1(num_classes=186, initial_kernel_size=7).to(device)
-    train_loader, test_loader = build_loaders(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+    if model_type == "y":
+        filename = "models/checkpoint_yolo.pt"
+        model = YOLOV1(num_classes=186, initial_kernel_size=7).to(device)
+        my_dataset_mean, my_dataset_std = load_dataset_stats()
+        train_loader, test_loader = build_loaders(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+    elif model_type == "18":
+        filename = "models/checkpoint_resnet18.pt"
+        model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
+        model.fc = torch.nn.Linear(model.fc.in_features, 186)
+        model.to(device)
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        train_loader, test_loader = build_loaders(mean, std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+    elif model_type == "50":
+        filename = "models/checkpoint_resnet50.pt"
+        model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V1)
+        model.fc = torch.nn.Linear(model.fc.in_features, 186)
+        model.to(device)
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        train_loader, test_loader = build_loaders(mean, std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
     # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=patience, factor=0.5)
 
     if choice == "c":
-        checkpoint = torch.load("models/checkpoint.pt", map_location="cpu", weights_only=True)
+        checkpoint = torch.load(filename, map_location="cpu", weights_only=True)
         model.load_state_dict(checkpoint["model"])
         start_epoch = checkpoint["epoch"]
         train_losses = checkpoint["train_losses"].tolist()
@@ -50,6 +77,8 @@ def main():
             for key, value in state.items():
                 if torch.is_tensor(value):
                     state[key] = value.to(device)
+        for group in optimizer.param_groups:
+            group["lr"] = learning_rate
     else:
         start_epoch = 0
         train_losses, test_losses, top_1_accuracy, top_5_accuracy = [], [], [], []
@@ -67,7 +96,7 @@ def main():
         "top_1_accuracy": torch.tensor(top_1_accuracy),
         "top_5_accuracy": torch.tensor(top_5_accuracy),
         "optimizer": optimizer.state_dict(),
-    }, "models/checkpoint.pt")
+    }, filename)
 
 if __name__ == "__main__":
     main()
