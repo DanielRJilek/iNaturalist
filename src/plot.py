@@ -7,15 +7,21 @@ while True:
         break
     print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50.")
 
+while True:
+    order = input("Choose order [actinopterygii/amphibia/animalia/arachnida/aves/chromista/fungi/insecta/mammalia/mollusca/plantae/protozoa/reptilia]: ").strip().lower()
+    if order in ("actinopterygii", "amphibia", "animalia", "arachnida", "aves", "chromista", "fungi", "insecta", "mammalia", "mollusca", "plantae", "protozoa", "reptilia"):
+        break
+    print("Enter a valid order.")
+
 if model_type == "y":
     model_name = "YOLOV1"
-    filename = "models/checkpoint_yolo.pt"
+    filename = f"models/checkpoint_yolo_{order}.pt"
 elif model_type == "18":
     model_name = "ResNet18"
-    filename = "models/checkpoint_resnet18.pt"
+    filename = f"models/checkpoint_resnet18_{order}.pt"
 elif model_type == "50":
     model_name = "ResNet50"
-    filename = "models/checkpoint_resnet50.pt"
+    filename = f"models/checkpoint_resnet50_{order}.pt"
 
 checkpoint = torch.load(filename, map_location="cpu", weights_only=True)
 test_loss = checkpoint["test_losses"].tolist()
@@ -44,5 +50,5 @@ axes[1].grid(axis="y")
 axes[1].legend()
 
 fig.tight_layout()
-fig.savefig(f"results/{model_name}.png")
+fig.savefig(f"results/{model_name}_{order}.png")
 plt.show()
