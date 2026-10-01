@@ -19,7 +19,7 @@ def as_rgb(value):
     return [value, value, value]
 
 # Loads the train and test datasets, applies the necessary transformations, takes the subset of mammal images
-def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target):
+def load_datasets(my_dataset_mean, my_dataset_std, train_indices, valid_indices, map_target):
     # Download training data from open datasets
     training_data = torchvision.datasets.INaturalist(
         root="data",
@@ -27,7 +27,7 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
         download=True,
         transform=torchvision.transforms.Compose([
             v2.RGB(),
-            torchvision.transforms.RandomResizedCrop(224), 
+            torchvision.transforms.RandomResizedCrop(320), 
             torchvision.transforms.RandomHorizontalFlip(),
             v2.ColorJitter(brightness=0.2, contrast=0.2),
             torchvision.transforms.ToTensor(),
@@ -38,7 +38,7 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
     )
     
     # Filter to mammal train images
-    training_data_subset = Subset(training_data, mammal_indices_train)
+    training_data_subset = Subset(training_data, train_indices)
 
     # Download validation data from open datasets
     test_data = torchvision.datasets.INaturalist(
@@ -46,8 +46,8 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
         version="2017",
         download=True,
         transform=torchvision.transforms.Compose([
-            torchvision.transforms.Resize(256),
-            torchvision.transforms.CenterCrop(224),
+            torchvision.transforms.Resize(320),
+            torchvision.transforms.CenterCrop(320),
             v2.RGB(),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(mean=as_rgb(my_dataset_mean), std=as_rgb(my_dataset_std))
@@ -56,7 +56,7 @@ def load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
     )
     
     # Filter to mammal valid images
-    test_data_subset = Subset(test_data, mammal_indices_valid)
+    test_data_subset = Subset(test_data, valid_indices)
 
     print(f"Number of training samples: {len(training_data_subset)}")
     print(f"Number of validation samples: {len(test_data_subset)}")
@@ -72,15 +72,15 @@ def load_dataset_stats(filename="data/stats/dataset_stats.txt"):
     return my_dataset_mean, my_dataset_std
 
 # Creates a mapping from the original class indices to new class indices based on the kept classes and returns a LabelMapper object that can be used as a target_transform in the dataset to remap the class labels to a contiguous range for training the model on a subset of classes.
-def create_mapping():
-    with open("data/stats/kept_classes.json", "r") as f:
+def create_mapping(order):
+    with open(f"data/stats/{order}_kept_classes.json", "r") as f:
         kept_classes = json.load(f)
     mapping = {old_idx: new_idx for new_idx, old_idx in enumerate(kept_classes)}
     map_target = LabelMapper(mapping)
     return map_target
 
-def build_loaders(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test):
-    train_data, test_data = load_datasets(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target)
+def build_loaders(my_dataset_mean, my_dataset_std, indices_train, indices_valid, map_target, batch_size_train, batch_size_test):
+    train_data, test_data = load_datasets(my_dataset_mean, my_dataset_std, indices_train, indices_valid, map_target)
     train_loader = torch.utils.data.DataLoader(
         train_data,
         batch_size=batch_size_train,
@@ -100,7 +100,11 @@ def build_loaders(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_
     return train_loader, test_loader
 
 # Loads class indices for a specific class from a JSON file, which can be used to subset the dataset for training and validation. The function checks if the file exists and loads the indices if it does, otherwise it returns an empty list.
-def load_class_indices(class_id, filename="data/stats/mammal_indices_train.json"):
+def load_class_indices(class_id, order, train=True):
+    if train:
+        filename = f"data/stats/{order}_indices_train.json"
+    else:
+        filename = f"data/stats/{order}_indices_valid.json"
     print(f"Loading class indices for class {class_id} from {filename}...")
     if os.path.exists(filename):
         with open(filename, "r") as f:
