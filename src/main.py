@@ -8,14 +8,13 @@ def main():
     torch.cuda.empty_cache()
     torch.multiprocessing.set_start_method('spawn', force=True)
     batch_size_train = 64
-    batch_size_test = 500
-    epochs = 5
+    batch_size_test = 128
+    epochs = 1
     random_seed = 1
-    learning_rate = 1e-4  
+    learning_rate = 1e-3  
     momentum = 0.9  
     weight_decay=5e-4
     test_interval = 1
-    patience = 2
     torch.manual_seed(random_seed)
     torch.backends.cudnn.benchmark = True
 
@@ -24,45 +23,49 @@ def main():
         if choice in ("n", "c"):
             break
         print("Enter n or c.")
-
     while True:
         model_type = input("Choose model type [y/18/50]: ").strip().lower()
         if model_type in ("y", "18", "50"):
             break
         print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50.")
+    while True:
+        order = input("Choose order [actinopterygii/amphibia/animalia/arachnida/aves/chromista/fungi/insecta/mammalia/mollusca/plantae/protozoa/reptilia]: ").strip().lower()
+        if order in ("actinopterygii", "amphibia", "animalia", "arachnida", "aves", "chromista", "fungi", "insecta", "mammalia", "mollusca", "plantae", "protozoa", "reptilia"):
+            break
+        print("Enter a valid order.")
 
-    
     # Get mammal indices for both train and valid sets
-    mammal_indices_train = load_class_indices(8, "data/stats/mammal_indices_train.json")
-    mammal_indices_valid = load_class_indices(8, "data/stats/mammal_indices_valid.json")
-    map_target = create_mapping()
+    indices_train = load_class_indices(8, order, train=True)
+    indices_valid = load_class_indices(8, order, train=False)
+    map_target = create_mapping(order)
+    num_classes = len(map_target.mapping_dict)
+    print(f"Number of classes: {num_classes}")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     if model_type == "y":
-        filename = "models/checkpoint_yolo.pt"
+        filename = f"models/checkpoint_yolo_{order}.pt"
         model = YOLOV1(num_classes=186, initial_kernel_size=7).to(device)
         my_dataset_mean, my_dataset_std = load_dataset_stats()
-        train_loader, test_loader = build_loaders(my_dataset_mean, my_dataset_std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+        train_loader, test_loader = build_loaders(my_dataset_mean, my_dataset_std, indices_train, indices_valid, map_target, batch_size_train, batch_size_test)
     elif model_type == "18":
-        filename = "models/checkpoint_resnet18.pt"
+        filename = f"models/checkpoint_resnet18_{order}.pt"
         model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
-        model.fc = torch.nn.Linear(model.fc.in_features, 186)
+        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
         model.to(device)
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-        train_loader, test_loader = build_loaders(mean, std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+        train_loader, test_loader = build_loaders(mean, std, indices_train, indices_valid, map_target, batch_size_train, batch_size_test)
     elif model_type == "50":
-        filename = "models/checkpoint_resnet50.pt"
+        filename = f"models/checkpoint_resnet50_{order}.pt"
         model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V1)
-        model.fc = torch.nn.Linear(model.fc.in_features, 186)
+        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
         model.to(device)
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-        train_loader, test_loader = build_loaders(mean, std, mammal_indices_train, mammal_indices_valid, map_target, batch_size_train, batch_size_test)
+        train_loader, test_loader = build_loaders(mean, std, indices_train, indices_valid, map_target, batch_size_train, batch_size_test)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=patience, factor=0.5)
 
     if choice == "c":
         checkpoint = torch.load(filename, map_location="cpu", weights_only=True)
