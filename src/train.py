@@ -6,7 +6,8 @@ from torch.amp import autocast
 def train_network( dataloader, model, optimizer, train_losses, train_counter, epoch, log_interval = 10, device="cpu", scaler=None ):
     model.train()
     for batch_idx, (data, target) in enumerate(dataloader):
-        data, target = data.to(device), target.to(device)
+        data = data.to(device, non_blocking=True, memory_format=torch.channels_last)
+        target = target.to(device, non_blocking=True)
         optimizer.zero_grad(set_to_none=True)
 
         with autocast(device_type=device.type):
@@ -34,7 +35,8 @@ def test_network( dataloader, model, test_losses, device="cpu" ):
     correct_top5 = 0
     with torch.no_grad():
         for data, target in dataloader:
-            data, target = data.to(device), target.to(device)
+            data = data.to(device, non_blocking=True, memory_format=torch.channels_last)
+            target = target.to(device, non_blocking=True)
             with autocast(device_type=device.type):
                 output = model(data)
                 test_loss += F.cross_entropy(output, target, reduction="sum").item()
