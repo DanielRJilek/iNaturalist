@@ -40,6 +40,31 @@ def get_class_indices(class_id, root="data", version="2017"):
             kept_classes.append(cat_id)
     return train_indices, valid_indices, kept_classes
 
+CLASS_DICT = {
+    "actinopterygii": 0,
+    "amphibia": 1,
+    "animalia": 2,
+    "arachnida": 3,
+    "aves": 4,
+    "chromista": 5,
+    "fungi": 6,
+    "insecta": 7,
+    "mammalia": 8,
+    "mollusca": 9,
+    "plantae": 10,
+    "protozoa": 11,
+    "reptilia": 12,
+}
+
+def prompt_order():
+    by_id = {class_id: name for name, class_id in CLASS_DICT.items()}
+    options = "\n".join(f"{class_id}: {by_id[class_id]}" for class_id in sorted(by_id))
+    while True:
+        raw = input(f"Choose order:\n{options}\n> ").strip()
+        if raw.isdigit() and int(raw) in by_id:
+            return by_id[int(raw)]
+        print("Enter a valid order number.")
+
 # Loads class indices for a specific class from a JSON file, which can be used to subset the dataset for training and validation. The function checks if the file exists and loads the indices if it does, otherwise it returns an empty list.
 def load_class_indices(class_id, order):
     filename = f"data/stats/{order}_indices_train.json"
@@ -50,27 +75,8 @@ def load_class_indices(class_id, order):
             return class_indices
 
 def main():
-    class_dict = {}
-    class_dict["actinopterygii"] = 0
-    class_dict["amphibia"] = 1
-    class_dict["animalia"] = 2
-    class_dict["arachnida"] = 3
-    class_dict["aves"] = 4
-    class_dict["chromista"] = 5
-    class_dict["fungi"] = 6
-    class_dict["insecta"] = 7
-    class_dict["mammalia"] = 8
-    class_dict["mollusca"] = 9
-    class_dict["plantae"] = 10
-    class_dict["protozoa"] = 11
-    class_dict["reptilia"] = 12
-    
-    while True:
-        order = input("Choose order [actinopterygii/amphibia/animalia/arachnida/aves/chromista/fungi/insecta/mammalia/mollusca/plantae/protozoa/reptilia]: ").strip().lower()
-        if order in class_dict.keys():
-            break
-        print("Enter a valid order.")
-    train_indices, valid_indices, kept_classes = get_class_indices(class_dict[order])  # Example: Get indices for class 8 (mammals)
+    order = prompt_order()
+    train_indices, valid_indices, kept_classes = get_class_indices(CLASS_DICT[order])
     with open(f"data/stats/{order}_indices_train.json", "w") as f:
         json.dump(train_indices, f)
     with open(f"data/stats/{order}_indices_valid.json", "w") as f:
