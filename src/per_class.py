@@ -2,14 +2,11 @@ import json
 import torch
 import torchvision
 from dataset import build_loaders, load_class_indices, create_mapping
+from subset import prompt_order
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    while True:
-        order = input("Choose order [actinopterygii/amphibia/animalia/arachnida/aves/chromista/fungi/insecta/mammalia/mollusca/plantae/protozoa/reptilia]: ").strip().lower()
-        if order in ("actinopterygii", "amphibia", "animalia", "arachnida", "aves", "chromista", "fungi", "insecta", "mammalia", "mollusca", "plantae", "protozoa", "reptilia"):
-            break
-        print("Enter a valid order.")
+    order = prompt_order()
     train_idx = load_class_indices(8, f"data/stats/{order}_indices_train.json")
     valid_idx = load_class_indices(8, f"data/stats/{order}_indices_valid.json")
     _, test_loader = build_loaders(
