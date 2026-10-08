@@ -1,3 +1,8 @@
+# main.py
+# Daniel Jilek, 2026
+# This file contains the main harness for training and validating a model on the training data and validating on the test data.
+# It prompts the user to choose a model type and order, and then trains and validates the model.
+
 import torch
 import torchvision
 from YOLOV1 import YOLOV1
@@ -5,6 +10,7 @@ from dataset import build_loaders, load_dataset_stats, load_class_indices, creat
 from subset import prompt_order
 from train import run_training
 
+# Main function for training and validating a model on the training data and validating on the test data.
 def main():
     torch.cuda.empty_cache()
     torch.multiprocessing.set_start_method('spawn', force=True)
@@ -22,16 +28,17 @@ def main():
     imageNet_mean = [0.485, 0.456, 0.406]
     imageNet_std = [0.229, 0.224, 0.225]
 
+    # Prompt the user to start a new run or continue with a previous run, and choose a model type and order.
     while True:
         choice = input("Start a new run or continue? [n/c]: ").strip().lower()
         if choice in ("n", "c"):
             break
         print("Enter n or c.")
     while True:
-        model_type = input("Choose model type [y/18/50/tiny]: ").strip().lower()
-        if model_type in ("y", "18", "50", "tiny"):
+        model_type = input("Choose model type [y/18/50/tiny/small]: ").strip().lower()
+        if model_type in ("y", "18", "50", "tiny", "small"):
             break
-        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50 or tiny for TinyNet.")
+        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50 or tiny for TinyNet or small for SmallNet.")
     order = prompt_order()
 
     # Get indices for both train and valid sets
@@ -43,6 +50,8 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
+    # Load the model and build the loaders for the training and validation data.
+    # Set final layer to the number of classes.
     if model_type == "y":
         filename = f"models/checkpoint_yolo_{order}.pt"
         model = YOLOV1(num_classes=186, initial_kernel_size=7).to(device)
@@ -67,6 +76,18 @@ def main():
         filename = f"models/checkpoint_convnext_tiny_{order}.pt"
         model = torchvision.models.convnext_tiny(
             weights=torchvision.models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1
+        )
+        model.classifier[2] = torch.nn.Linear(model.classifier[2].in_features, num_classes)
+        model.to(device)
+        model = model.to(memory_format=torch.channels_last)
+        train_loader, test_loader = build_loaders(imageNet_mean, imageNet_std, indices_train, indices_valid, map_target, batch_size_train, batch_size_test)
+        weight_decay = 0.05
+        learning_rate = 1e-4
+        optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    elif model_type == "small":
+        filename = f"models/checkpoint_convnext_small_{order}.pt"
+        model = torchvision.models.convnext_small(
+            weights=torchvision.models.ConvNeXt_Small_Weights.IMAGENET1K_V1
         )
         model.classifier[2] = torch.nn.Linear(model.classifier[2].in_features, num_classes)
         model.to(device)
