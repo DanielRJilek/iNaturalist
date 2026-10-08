@@ -1,9 +1,14 @@
+# per_class.py
+# Daniel Jilek, 2026
+# This file contains code for calculating the per-class accuracy for a specific model and order.
+
 import json
 import torch
 import torchvision
 from dataset import build_loaders, load_class_indices, create_mapping
 from subset import prompt_order
 
+# Calculates the per-class accuracy for a specific model and order.
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     order = prompt_order()
