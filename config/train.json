@@ -1,0 +1,48 @@
+{
+    "batch_size_train": 64,
+    "batch_size_test": 128,
+    "epochs": 1,
+    "seed": 1,
+    "test_interval": 1,
+    "image_size": 320,
+    "models": {
+      "y": {
+        "name": "yolo",
+        "optimizer": "sgd",
+        "learning_rate": 0.001,
+        "momentum": 0.9,
+        "weight_decay": 0.0005,
+        "normalize": "dataset"
+      },
+      "18": {
+        "name": "resnet18",
+        "optimizer": "sgd",
+        "learning_rate": 0.001,
+        "momentum": 0.9,
+        "weight_decay": 0.0005,
+        "normalize": "imagenet"
+      },
+      "50": {
+        "name": "resnet50",
+        "optimizer": "sgd",
+        "learning_rate": 0.001,
+        "momentum": 0.9,
+        "weight_decay": 0.0005,
+        "normalize": "imagenet"
+      },
+      "tiny": {
+        "name": "convnext_tiny",
+        "optimizer": "adamw",
+        "learning_rate": 0.0001,
+        "weight_decay": 0.05,
+        "normalize": "imagenet"
+      },
+      "small": {
+        "name": "convnext_small",
+        "optimizer": "adamw",
+        "learning_rate": 0.0001,
+        "weight_decay": 0.05,
+        "normalize": "imagenet"
+      }
+    }
+  }
