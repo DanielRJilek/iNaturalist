@@ -1,3 +1,7 @@
+# train.py
+# Daniel Jilek, 2026
+# This file contains code for training the model on the training data and validating on the test data.
+
 import torch
 import torch.nn.functional as F
 from torch.amp import autocast
@@ -61,6 +65,7 @@ def test_network( dataloader, model, test_losses, device="cpu" ):
     print('Top-5 Accuracy: {}/{} ({:.1f}%)\n'.format(correct_top5, total, top_5_accuracy))
     return top_1_accuracy, top_5_accuracy
 
+# Runs the training and validation for a specific model and order.
 def run_training(model, train_loader, test_loader, optimizer, epochs, device, test_interval=1, scheduler=None, start_epoch=0):
     train_losses, train_counter, test_losses = [], [], []
     top_1_accuracy, top_5_accuracy = [], []

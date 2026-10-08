@@ -1,3 +1,7 @@
+# dataset.py
+# Daniel Jilek, 2026
+# This file contains functions for loading the dataset and applying the necessary transformations.
+
 import torchvision
 import torch
 from torch.utils.data import Subset

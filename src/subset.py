@@ -1,12 +1,32 @@
+# subset.py
+# Daniel Jilek, 2026
+# This file contains code for loading class indices for a specific class from a JSON file, 
+# which can be used to subset the dataset for training and validation. 
+
 import torchvision
 import os
 import json
 
-# This file contains code for loading class indices for a specific class from a JSON file, which can be used to subset the dataset for training and validation. The function checks if the file exists and loads the indices if it does, otherwise it returns an empty list.
+CLASS_DICT = {
+    "actinopterygii": 0,
+    "amphibia": 1,
+    "animalia": 2,
+    "arachnida": 3,
+    "aves": 4,
+    "chromista": 5,
+    "fungi": 6,
+    "insecta": 7,
+    "mammalia": 8,
+    "mollusca": 9,
+    "plantae": 10,
+    "protozoa": 11,
+    "reptilia": 12,
+}
+
+# Gets the class indices for a specific class from the dataset.
 def get_class_indices(class_id, root="data", version="2017"):
     # Load the full dataset temporarily (just to get categories)
     # Super-class 8 is mammals, starting around 395000-429000
-
     dataset = torchvision.datasets.INaturalist(
         root=root,
         version=version,
@@ -40,22 +60,7 @@ def get_class_indices(class_id, root="data", version="2017"):
             kept_classes.append(cat_id)
     return train_indices, valid_indices, kept_classes
 
-CLASS_DICT = {
-    "actinopterygii": 0,
-    "amphibia": 1,
-    "animalia": 2,
-    "arachnida": 3,
-    "aves": 4,
-    "chromista": 5,
-    "fungi": 6,
-    "insecta": 7,
-    "mammalia": 8,
-    "mollusca": 9,
-    "plantae": 10,
-    "protozoa": 11,
-    "reptilia": 12,
-}
-
+# Prompts the user to choose an order from the CLASS_DICT.
 def prompt_order():
     by_id = {class_id: name for name, class_id in CLASS_DICT.items()}
     options = "\n".join(f"{class_id}: {by_id[class_id]}" for class_id in sorted(by_id))
@@ -74,6 +79,7 @@ def load_class_indices(class_id, order):
             class_indices = json.load(f)
             return class_indices
 
+# Main function to get the class indices for a specific class and save them to a JSON file.
 def main():
     order = prompt_order()
     train_indices, valid_indices, kept_classes = get_class_indices(CLASS_DICT[order])

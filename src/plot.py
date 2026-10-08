@@ -1,8 +1,13 @@
+# plot.py
+# Daniel Jilek, 2026
+# This file contains code for plotting the training and validation loss and accuracy for a specific model and order.
+
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from subset import prompt_order
 
+# Plots the training and validation loss and accuracy for a specific model and order.
 def main():
     while True:
         model_type = input("Choose model type [y/18/50/tiny]: ").strip().lower()
@@ -24,6 +29,9 @@ def main():
     elif model_type == "tiny":
         model_name = "ConvNeXt-Tiny"
         filename = f"models/checkpoint_convnext_tiny_{order}.pt"
+    elif model_type == "small":
+        model_name = "ConvNeXt-Small"
+        filename = f"models/checkpoint_convnext_small_{order}.pt"
 
     checkpoint = torch.load(filename, map_location="cpu", weights_only=True)
     test_loss = checkpoint["test_losses"].tolist()
