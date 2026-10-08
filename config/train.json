@@ -1,8 +1,5 @@
 {
-    "batch_size_train": 64,
-    "batch_size_test": 128,
-    "epochs": 1,
-    "seed": 1,
+    "epochs": 5,
     "test_interval": 1,
     "image_size": 320,
     "models": {
@@ -12,7 +9,9 @@
         "learning_rate": 0.001,
         "momentum": 0.9,
         "weight_decay": 0.0005,
-        "normalize": "dataset"
+        "normalize": "dataset",
+        "batch_size_train": 64,
+        "batch_size_test": 128
       },
       "18": {
         "name": "resnet18",
@@ -20,7 +19,9 @@
         "learning_rate": 0.001,
         "momentum": 0.9,
         "weight_decay": 0.0005,
-        "normalize": "imagenet"
+        "normalize": "imagenet",
+        "batch_size_train": 64,
+        "batch_size_test": 128
       },
       "50": {
         "name": "resnet50",
@@ -28,21 +29,27 @@
         "learning_rate": 0.001,
         "momentum": 0.9,
         "weight_decay": 0.0005,
-        "normalize": "imagenet"
+        "normalize": "imagenet",
+        "batch_size_train": 64,
+        "batch_size_test": 128
       },
       "tiny": {
         "name": "convnext_tiny",
         "optimizer": "adamw",
         "learning_rate": 0.0001,
         "weight_decay": 0.05,
-        "normalize": "imagenet"
+        "normalize": "imagenet",
+        "batch_size_train": 64,
+        "batch_size_test": 128
       },
       "small": {
         "name": "convnext_small",
         "optimizer": "adamw",
         "learning_rate": 0.0001,
         "weight_decay": 0.05,
-        "normalize": "imagenet"
+        "normalize": "imagenet",
+        "batch_size_train": 32,
+        "batch_size_test": 64
       }
     }
   }
