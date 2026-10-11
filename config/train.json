@@ -1,5 +1,5 @@
 {
-    "epochs": 5,
+    "epochs": 1,
     "test_interval": 1,
     "image_size": 320,
     "models": {
