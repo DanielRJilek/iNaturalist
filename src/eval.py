@@ -9,8 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import torch
 import torchvision
-from YOLOV1 import YOLOV1
-from dataset import build_loaders, load_dataset_stats, load_class_indices, create_mapping
+from dataset import build_loaders, load_class_indices, create_mapping
 from subset import prompt_order
 from train import test_network
 
@@ -21,10 +20,10 @@ def main():
     imageNet_std = [0.229, 0.224, 0.225]
 
     while True:
-        model_type = input("Choose model type [y/18/50/tiny/small]: ").strip().lower()
-        if model_type in ("y", "18", "50", "tiny", "small"):
+        model_type = input("Choose model type [50/tiny/small]: ").strip().lower()
+        if model_type in ("50", "tiny", "small"):
             break
-        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50 or tiny for TinyNet or small for SmallNet.")
+        print("Enter 50 for ResNet50 or tiny for ConvNeXt-Tiny or small for ConvNeXt-Small.")
     order = prompt_order()
 
     with open("config/train.json", "r") as f:
@@ -40,14 +39,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    if model_type == "y":
-        model = YOLOV1(num_classes=num_classes, initial_kernel_size=7)
-        mean, std = load_dataset_stats()
-    elif model_type == "18":
-        model = torchvision.models.resnet18(weights=None)
-        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
-        mean, std = imageNet_mean, imageNet_std
-    elif model_type == "50":
+    if model_type == "50":
         model = torchvision.models.resnet50(weights=None)
         model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
         mean, std = imageNet_mean, imageNet_std

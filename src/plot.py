@@ -10,20 +10,14 @@ from subset import prompt_order
 # Plots the training and validation loss and accuracy for a specific model and order.
 def main():
     while True:
-        model_type = input("Choose model type [y/18/50/tiny/small]: ").strip().lower()
-        if model_type in ("y", "18", "50", "tiny", "small"):
+        model_type = input("Choose model type [50/tiny/small]: ").strip().lower()
+        if model_type in ("50", "tiny", "small"):
             break
-        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50 or tiny for TinyNet or small for SmallNet.")
+        print("Enter 50 for ResNet50 or tiny for ConvNeXt-Tiny or small for ConvNeXt-Small.")
 
     order = prompt_order()
 
-    if model_type == "y":
-        model_name = "YOLOV1"
-        filename = f"models/checkpoint_yolo_{order}.pt"
-    elif model_type == "18":
-        model_name = "ResNet18"
-        filename = f"models/checkpoint_resnet18_{order}.pt"
-    elif model_type == "50":
+    if model_type == "50":
         model_name = "ResNet50"
         filename = f"models/checkpoint_resnet50_{order}.pt"
     elif model_type == "tiny":

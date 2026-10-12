@@ -6,7 +6,6 @@
 import json
 import torch
 import torchvision
-from YOLOV1 import YOLOV1
 from dataset import build_loaders, load_dataset_stats, load_class_indices, create_mapping
 from subset import prompt_order
 from train import run_training
@@ -26,10 +25,10 @@ def main():
             break
         print("Enter n or c.")
     while True:
-        model_type = input("Choose model type [y/18/50/tiny/small]: ").strip().lower()
-        if model_type in ("y", "18", "50", "tiny", "small"):
+        model_type = input("Choose model type [50/tiny/small]: ").strip().lower()
+        if model_type in ("50", "tiny", "small"):
             break
-        print("Enter y for YOLOV1 or 18 for ResNet18 or 50 for ResNet50 or tiny for TinyNet or small for SmallNet.")
+        print("Enter 50 for ResNet50 or tiny for ConvNeXt-Tiny or small for ConvNeXt-Small.")
     order = prompt_order()
 
     # Get indices for both train and valid sets
@@ -63,13 +62,7 @@ def main():
     
     # Load the model and build the loaders for the training and validation data.
     # Set final layer to the number of classes.
-    if model_type == "y":
-        model = YOLOV1(num_classes=186, initial_kernel_size=7).to(device)
-    elif model_type == "18":
-        model = torchvision.models.resnet18(weights=torchvision.models.ResNet18_Weights.IMAGENET1K_V1)
-        model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
-        model.to(device)
-    elif model_type == "50":
+    if model_type == "50":
         model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V1)
         model.fc = torch.nn.Linear(model.fc.in_features, num_classes)
         model.to(device)
